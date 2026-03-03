@@ -1,0 +1,137 @@
+# compose-orcl.yaml
+# -------------------------------------------------------------
+# Oracle 23ai Free + ORDS (APEX) – **no pod**, just two independent
+# containers that share a custom network.
+# -------------------------------------------------------------
+# version: "3.9"
+# export ORACLE_PWD=password1
+# export ORDS_PUBLIC_USER_PWD=password2
+# mkdir -p ~/opt/oracle/oradata
+# mkdir -p ~/opt/oracle/ords_config
+# mkdir -p ~/opt/oracle/ords_secrets
+# cd ~/opt/oracle
+# curl -L -O https://download.oracle.com/otn_software/apex/apex-latest.zip
+# unzip apex-latest.zip
+# podman pull container-registry.oracle.com/database/free:latest
+# podman pull container-registry.oracle.com/database/ords:latest
+# podman compose -f compose-orcl.yaml up
+services:
+
+  # ---------------------------------------------------------
+  # Oracle Database 23ai Free
+  # ---------------------------------------------------------
+  oraclefree26ai:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: oraclefree26ai
+    # Expose the Oracle listener to the host
+    ports:
+      - "1521:1521"
+    # Persist the data files
+    volumes:
+      - ${HOME}/opt/oracle/oradata:/opt/oracle/oradata
+    # Optional: give the DB a static IP on the custom network.
+    # Comment the block if you prefer a dynamic address.
+    networks:
+      ora_app_network:
+        ipv4_address: 10.100.0.40   # <-- uncomment to reserve this IP
+    # Health‑check – will wait for the DB to be ready
+    healthcheck:
+      test: ["CMD", "/opt/oracle/checkDBStatus.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    # Secret handling – password file mounted at /run/secrets/
+    # secrets:
+    #   - oracle_dba_pwd
+    environment:
+      # Oracle Free image uses ORACLE_PWD (not ORACLE_PASSWORD)
+      - ORACLE_PWD=${ORACLE_PWD}
+    restart: unless-stopped
+    # (Optional) resource limits – adjust for your host
+    cpu_shares: 1024
+    mem_limit: 4g
+
+  # ---------------------------------------------------------
+  # ORDS (REST Data Services) + APEX
+  # ---------------------------------------------------------
+  ords-apexfree:
+    image: container-registry.oracle.com/database/ords:25.4.0
+    container_name: ords-apexfree
+    # Wait until the DB reports healthy before starting
+    depends_on:
+      oraclefree26ai:
+        condition: service_healthy
+    # ORDS needs to reach the DB; they are on the same custom network.
+    networks:
+      - ora_app_network
+    # Port mapping – expose ORDS HTTP endpoint
+    ports:
+      - "8080:8080"
+    # Mount points (same as before)
+    volumes:
+      - ${HOME}/opt/oracle/ords_config:/etc/ords/config:Z
+      - ${HOME}/opt/oracle/apex:/opt/oracle/apex:Z
+      - ${HOME}/opt/oracle/ords_secrets:/opt/oracle/variables:Z
+      # - type: bind
+      #   source: ${HOME}/opt/oracle/ords_entrypoint.sh
+      #   target: /usr/local/bin/ords-entrypoint.sh
+      #   bind: {}
+    # command: ["/usr/local/bin/ords-entrypoint.sh"]
+    # Secret injection
+    # secrets:
+    #   - oracle_dba_pwd
+    #   - ords_pwd
+    # Environment variables – DB connection info
+    environment:
+      # - DEBUG=TRUE
+      # - LOG_LEVEL=DEBUG
+      # Use service-name DNS on the compose network (no static IP required)
+      - DBHOST=10.100.0.40
+      - DBSERVICENAME=freepdb1
+      - DBPORT=1521
+      # ORDS image expects direct credentials (not *_FILE variables)
+      # Set these in your shell or .env before `podman compose up`.
+      - ORACLE_PWD=${ORACLE_PWD}
+      - ORACLE_USER_PWD=${ORDS_PUBLIC_USER_PWD}
+      - APEX_PWD=${ORDS_PUBLIC_USER_PWD}
+      # Alternative supported method:
+      # - CONN_STRING=sys/${ORACLE_PWD}@oraclefree26ai:1521/freepdb1
+    # Simple HTTP health‑check for ORDS
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/ords/"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+    restart: unless-stopped
+    cpu_shares: 512
+    mem_limit: 2g
+
+# -----------------------------------------------------------------
+# Named volumes – persisted data
+# -----------------------------------------------------------------
+# volumes:
+volumes:
+  ora_db_vol:          # Oracle datafiles (/opt/oracle/oradata)
+
+# -----------------------------------------------------------------
+# Secrets – must already exist (created via `podman secret create …`)
+# -----------------------------------------------------------------
+# secrets:
+#   oracle_dba_pwd:
+#     external: true
+#     name: oracle_dba_pwd
+#   ords_pwd:
+#     external: true
+#     name: ords_pwd
+
+# -----------------------------------------------------------------
+# Custom network – both containers attach to this bridge
+# -----------------------------------------------------------------
+networks:
+  ora_app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.100.0.0/24   # The subnet from which Podman will hand out IPs
