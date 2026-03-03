@@ -2,6 +2,8 @@
 set -euo pipefail
 
 # Defaults
+# these defaults are focused on my (mac) based environment
+# change BASE_DIR to suit yours.
 BASE_DIR="/Users/${USER}/opt/oracle"
 ORADATA_DIR="$BASE_DIR/oradata"
 ORDS_CONFIG_DIR="$BASE_DIR/ords_config"
