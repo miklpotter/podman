@@ -77,7 +77,7 @@ export ORDS_PUBLIC_USER_PWD=password2
 
 Now your environment is configured, you can navigate to the directory where you are holding the yaml file, and start it up!
 
-podman compose -f compose-orcl.yaml up -d
+```podman compose -f compose-orcl.yaml up -d```
 
 The -d option immediately detaches the command from your terminal,
 
