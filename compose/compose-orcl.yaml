@@ -28,7 +28,7 @@ services:
       - "1521:1521"
     # Persist the data files
     volumes:
-      - ${HOME}/opt/oracle/oradata:/opt/oracle/oradata
+      - ${HOME}/opt/oracle/oradata:/opt/oracle/oradata:Z
     # Optional: give the DB a static IP on the custom network.
     # Comment the block if you prefer a dynamic address.
     networks:
