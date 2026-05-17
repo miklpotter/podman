@@ -1,0 +1,100 @@
+# compose-orcl-apex26.yaml
+# -------------------------------------------------------------
+# Oracle 23ai Free + ORDS 26.1.1 (APEX) – second independent stack.
+# Runs alongside compose-orcl.yaml without port or network conflicts.
+#
+# Prerequisites:
+# export ORACLE_PWD=password1
+# export ORDS_PUBLIC_USER_PWD=password2
+# mkdir -p ~/opt/oracle/apex26/oradata
+# mkdir -p ~/opt/oracle/apex26/ords/config
+# mkdir -p ~/opt/oracle/apex26/ords/secrets
+# sudo chown 54321 ~/opt/oracle/apex26/oradata   # if rootless
+# cd ~/opt/oracle
+# curl -L -O https://download.oracle.com/otn_software/apex/apex26-latest.zip
+# unzip apex26-latest.zip -d apex26/apex
+# podman compose -f compose-orcl-apex26.yaml up -d
+#
+# Cleanup (one folder per container):
+#   DB:   podman rm -f orclapex26    && rm -rf ~/opt/oracle/apex26/oradata
+#   ORDS: podman rm -f ords-apex2611 && rm -rf ~/opt/oracle/apex26/ords
+# -------------------------------------------------------------
+
+name: apex26
+
+services:
+
+  # ---------------------------------------------------------
+  # Oracle Database 26ai Free  (host port 1522 → container 1521)
+  # ---------------------------------------------------------
+  db-apex26:
+    image: container-registry.oracle.com/database/free:23.26.1.0
+    container_name: orclapex26
+    ports:
+      - "1522:1521"
+    volumes:
+      - ${HOME}/opt/oracle/apex26/oradata:/opt/oracle/oradata:Z
+    networks:
+      ora_apex26_network:
+        ipv4_address: 10.100.1.50
+    healthcheck:
+      test: ["CMD", "/opt/oracle/checkDBStatus.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    environment:
+      - ORACLE_PWD=${ORACLE_PWD}
+    restart: unless-stopped
+    cpu_shares: 1024
+    mem_limit: 4g
+
+  # ---------------------------------------------------------
+  # ORDS 26.1.1 + APEX  (host port 8180 → container 8080)
+  # ---------------------------------------------------------
+  ords-apex26:
+    image: container-registry.oracle.com/database/ords:26.1.1
+    container_name: ords-apex2611
+    depends_on:
+      db-apex26:
+        condition: service_healthy
+    networks:
+      - ora_apex26_network
+    ports:
+      - "8180:8080"
+    volumes:
+      - ${HOME}/opt/oracle/apex26/ords/config:/etc/ords/config:Z
+      - ${HOME}/opt/oracle/apex26/apex:/opt/oracle/apex:Z
+      - ${HOME}/opt/oracle/apex26/ords/secrets:/opt/oracle/variables:Z
+    environment:
+      - DBHOST=10.100.1.50
+      - DBSERVICENAME=freepdb1
+      - DBPORT=1521
+      - ORACLE_PWD=${ORACLE_PWD}
+      - ORACLE_USER_PWD=${ORDS_PUBLIC_USER_PWD}
+      - APEX_PWD=${ORDS_PUBLIC_USER_PWD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/ords/"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+    restart: unless-stopped
+    cpu_shares: 512
+    mem_limit: 2g
+
+# -----------------------------------------------------------------
+# Named volumes
+# -----------------------------------------------------------------
+volumes:
+  ora_apex26_db_vol:
+
+# -----------------------------------------------------------------
+# Custom network – isolated from compose-orcl.yaml's ora_app_network
+# -----------------------------------------------------------------
+networks:
+  ora_apex26_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.100.1.0/24
