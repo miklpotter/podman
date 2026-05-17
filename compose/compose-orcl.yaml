@@ -15,6 +15,9 @@
 # podman pull container-registry.oracle.com/database/free:latest
 # podman pull container-registry.oracle.com/database/ords:latest
 # podman compose -f compose-orcl.yaml up
+
+name: orcl-free
+
 services:
 
   # ---------------------------------------------------------
