@@ -91,4 +91,55 @@ connect to the DB as  sys as sysdba
 eg: sql sys@@localhost:1521/freepdb1 as sysdba
 SQL> @apxchpwd
 ```
+# APEX26 compose
+this will create a new, dedicated database, again with persistent DB files, but now they are all contained withing a single location for easier transport, and named to indicate the APEX version.  I've done this to make it more obvious, and to allow both versions to co-exist.
 
+## Podman
+follow the instructions here [Install Podman desktop](#install-podman-desktop)
+
+### Pull the containers NOW, save time.
+pulling the containers can take some minutes, pre-load them so you have your container images ready by the time you are set-up and ready to go.
+for APEX26 I want to be explicit in the versions, so I didn't use `-latest`
+```
+podman pull container-registry.oracle.com/database/free:23.26.1.0
+podman pull container-registry.oracle.com/database/ords:26.1.1
+```
+### Create custom directories
+```
+mkdir -p ~/opt/oracle/apex26/oradata
+mkdir -p ~/opt/oracle/apex26/ords_config
+mkdir -p ~/opt/oracle/apex26/ords_secrets
+```
+
+Note: if you machine is running with root privileges, it's likely you will need to change permissions on the oradata folder:
+if you have issues, then change ownership of the directory
+
+```sudo chown 54321 ~/opt/oracle/oradata```
+
+ref: [FAQ](https://github.com/oracle/docker-images/blob/main/OracleDatabase/SingleInstance/FAQ.md#cannot-create-directory-error-when-using-volumes)
+
+### Download and unzip latest APEX-26
+
+same as [dowload APEX](#download-and-unzip-latest-apex).  but be sure to check version...
+
+```
+cd ~/opt/oracle/apex26
+curl -L -O https://download.oracle.com/otn_software/apex/apex-latest.zip
+unzip apex-latest.zip
+```
+### Setup your environment variables
+
+choose a good password!
+
+```sh
+export ORACLE_PWD=password1
+export ORDS_PUBLIC_USER_PWD=password2
+```
+
+Now your environment is configured, you can navigate to the directory where you are holding the yaml file, and start it up!
+
+```podman compose -f compose-orcl-apex26.yaml up -d```
+
+The -d option immediately detaches the command from your terminal,
+
+then follow [final steps](#final-steps) , but use ```~/opt/oracle/apex26/apex```
