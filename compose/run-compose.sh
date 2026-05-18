@@ -74,3 +74,34 @@ select_compose_file() {
 
 COMPOSE_FILE="$(select_compose_file "${1:-}")"
 echo "Compose file : $(basename "${COMPOSE_FILE}")"
+
+# ── PODMAN_BASE resolution ────────────────────────────────────────────────────
+
+compose_basename="$(basename "${COMPOSE_FILE}")"
+
+# Resolve PODMAN_BASE: use built-in defaults if not already set
+if [[ -z "${PODMAN_BASE:-}" ]]; then
+  case "${compose_basename}" in
+    compose-orcl.yaml)
+      PODMAN_BASE="${HOME}/opt/oracle"
+      ;;
+    compose-orcl-apex26.yaml)
+      PODMAN_BASE="${HOME}/opt/oracle/apex26"
+      ;;
+    *)
+      # Generic fallback: derive from yaml stem (e.g. compose-orcl-apex27 → apex27)
+      stem="${compose_basename%.yaml}"
+      stem="${stem#compose-orcl-}"
+      stem="${stem#compose-}"
+      PODMAN_BASE="${HOME}/opt/oracle/${stem}"
+      ;;
+  esac
+fi
+
+echo ""
+read -r -p "PODMAN_BASE [${PODMAN_BASE}]: " user_base
+if [[ -n "${user_base}" ]]; then
+  PODMAN_BASE="${user_base}"
+fi
+export PODMAN_BASE
+echo "PODMAN_BASE  : ${PODMAN_BASE}"
