@@ -105,3 +105,37 @@ if [[ -n "${user_base}" ]]; then
 fi
 export PODMAN_BASE
 echo "PODMAN_BASE  : ${PODMAN_BASE}"
+
+# ── Password prompting ────────────────────────────────────────────────────────
+
+prompt_password() {
+  local var_name="$1"
+  local prompt_label="$2"
+  local value=""
+
+  echo ""
+  while true; do
+    read -r -s -p "Enter ${prompt_label} (or 'q' to quit): " value
+    echo ""
+    if [[ "${value}" == "q" || "${value}" == "Q" ]]; then
+      echo "Exiting."
+      exit 0
+    fi
+    if [[ -n "${value}" ]]; then
+      break
+    fi
+    echo "  Password cannot be empty."
+  done
+
+  export "${var_name}=${value}"
+}
+
+if [[ -z "${ORACLE_PWD:-}" ]]; then
+  prompt_password "ORACLE_PWD" "ORACLE_PWD"
+fi
+
+if [[ -z "${ORDS_PUBLIC_USER_PWD:-}" ]]; then
+  prompt_password "ORDS_PUBLIC_USER_PWD" "ORDS_PUBLIC_USER_PWD"
+fi
+
+echo "Passwords    : set"
