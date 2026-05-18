@@ -10,7 +10,6 @@
 # mkdir -p ${PODMAN_BASE}/ords/config
 # mkdir -p ${PODMAN_BASE}/ords/secrets
 # mkdir -p ${PODMAN_BASE}/apex
-# cd ~/opt/oracle
 # curl -L -O https://download.oracle.com/otn_software/apex/apex-latest.zip
 # unzip apex-latest.zip
 # podman pull container-registry.oracle.com/database/free:latest

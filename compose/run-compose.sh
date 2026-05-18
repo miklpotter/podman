@@ -51,14 +51,14 @@ select_compose_file() {
     return
   fi
 
-  echo ""
-  echo "Available compose files:"
+  echo "" >&2
+  echo "Available compose files:" >&2
   local i=1
   for f in "${yaml_files[@]}"; do
-    echo "  ${i}) $(basename "${f}")"
+    echo "  ${i}) $(basename "${f}")" >&2
     ((i++))
   done
-  echo ""
+  echo "" >&2
 
   local choice
   while true; do
@@ -68,7 +68,7 @@ select_compose_file() {
       echo "${yaml_files[$((choice - 1))]}"
       return
     fi
-    echo "  Please enter a number between 1 and ${#yaml_files[@]}."
+    echo "  Please enter a number between 1 and ${#yaml_files[@]}." >&2
   done
 }
 
@@ -181,4 +181,4 @@ echo "Starting stack..."
 podman compose -f "${COMPOSE_FILE}" up -d
 echo ""
 echo "Stack is up. ORDS health check may take 1-2 minutes."
-echo "Check status: podman compose -f $(basename "${COMPOSE_FILE}") ps"
+echo "Check status: podman compose -f ${COMPOSE_FILE} ps"
