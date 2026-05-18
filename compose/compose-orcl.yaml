@@ -31,7 +31,7 @@ services:
       - "1521:1521"
     # Persist the data files
     volumes:
-      - ${HOME}/opt/oracle/oradata:/opt/oracle/oradata:Z
+      - ${PODMAN_BASE}/oradata:/opt/oracle/oradata:Z
     # Optional: give the DB a static IP on the custom network.
     # Comment the block if you prefer a dynamic address.
     networks:
@@ -73,9 +73,9 @@ services:
       - "8080:8080"
     # Mount points (same as before)
     volumes:
-      - ${HOME}/opt/oracle/ords_config:/etc/ords/config:Z
-      - ${HOME}/opt/oracle/apex:/opt/oracle/apex:Z
-      - ${HOME}/opt/oracle/ords_secrets:/opt/oracle/variables:Z
+      - ${PODMAN_BASE}/ords/config:/etc/ords/config:Z
+      - ${PODMAN_BASE}/apex:/opt/oracle/apex:Z
+      - ${PODMAN_BASE}/ords/secrets:/opt/oracle/variables:Z
       # - type: bind
       #   source: ${HOME}/opt/oracle/ords_entrypoint.sh
       #   target: /usr/local/bin/ords-entrypoint.sh
