@@ -157,3 +157,28 @@ if [[ "${remove_containers}" =~ ^[Yy]$ ]]; then
     echo "  Network removed."
   fi
 fi
+
+# ── Pre-launch summary ────────────────────────────────────────────────────────
+
+echo ""
+echo "────────────────────────────────────────"
+echo "  Compose file : $(basename "${COMPOSE_FILE}")"
+echo "  PODMAN_BASE  : ${PODMAN_BASE}"
+echo "────────────────────────────────────────"
+echo ""
+
+# ── Create required directories ───────────────────────────────────────────────
+
+mkdir -p \
+  "${PODMAN_BASE}/oradata" \
+  "${PODMAN_BASE}/ords/config" \
+  "${PODMAN_BASE}/ords/secrets" \
+  "${PODMAN_BASE}/apex"
+
+# ── Launch ────────────────────────────────────────────────────────────────────
+
+echo "Starting stack..."
+podman compose -f "${COMPOSE_FILE}" up -d
+echo ""
+echo "Stack is up. ORDS health check may take 1-2 minutes."
+echo "Check status: podman compose -f $(basename "${COMPOSE_FILE}") ps"
