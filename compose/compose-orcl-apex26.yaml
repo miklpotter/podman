@@ -6,18 +6,18 @@
 # Prerequisites:
 # export ORACLE_PWD=password1
 # export ORDS_PUBLIC_USER_PWD=password2
-# mkdir -p ~/opt/oracle/apex26/oradata
-# mkdir -p ~/opt/oracle/apex26/ords/config
-# mkdir -p ~/opt/oracle/apex26/ords/secrets
-# sudo chown 54321 ~/opt/oracle/apex26/oradata   # if rootless
-# cd ~/opt/oracle
+# mkdir -p ${PODMAN_BASE}/oradata
+# mkdir -p ${PODMAN_BASE}/ords/config
+# mkdir -p ${PODMAN_BASE}/ords/secrets
+# mkdir -p ${PODMAN_BASE}/apex
+# sudo chown 54321 ${PODMAN_BASE}/oradata   # if rootless
 # curl -L -O https://download.oracle.com/otn_software/apex/apex26-latest.zip
-# unzip apex26-latest.zip -d apex26/apex
+# unzip apex26-latest.zip -d ${PODMAN_BASE}/apex
 # podman compose -f compose-orcl-apex26.yaml up -d
 #
 # Cleanup (one folder per container):
-#   DB:   podman rm -f orclapex26    && rm -rf ~/opt/oracle/apex26/oradata
-#   ORDS: podman rm -f ords-apex2611 && rm -rf ~/opt/oracle/apex26/ords
+#   DB:   podman rm -f orclapex26    && rm -rf ${PODMAN_BASE}/oradata
+#   ORDS: podman rm -f ords-apex2611 && rm -rf ${PODMAN_BASE}/ords
 # -------------------------------------------------------------
 
 name: apex26
@@ -33,7 +33,7 @@ services:
     ports:
       - "1522:1521"
     volumes:
-      - ${HOME}/opt/oracle/apex26/oradata:/opt/oracle/oradata:Z
+      - ${PODMAN_BASE}/oradata:/opt/oracle/oradata:Z
     networks:
       ora_apex26_network:
         ipv4_address: 10.100.1.50
@@ -63,9 +63,9 @@ services:
     ports:
       - "8180:8080"
     volumes:
-      - ${HOME}/opt/oracle/apex26/ords/config:/etc/ords/config:Z
-      - ${HOME}/opt/oracle/apex26/apex:/opt/oracle/apex:Z
-      - ${HOME}/opt/oracle/apex26/ords/secrets:/opt/oracle/variables:Z
+      - ${PODMAN_BASE}/ords/config:/etc/ords/config:Z
+      - ${PODMAN_BASE}/apex:/opt/oracle/apex:Z
+      - ${PODMAN_BASE}/ords/secrets:/opt/oracle/variables:Z
     environment:
       - DBHOST=10.100.1.50
       - DBSERVICENAME=freepdb1
