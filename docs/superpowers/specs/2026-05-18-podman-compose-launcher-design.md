@@ -1,4 +1,5 @@
 # Podman Compose Launcher — Design Spec
+
 **Date:** 2026-05-18
 **Status:** Approved
 
@@ -16,7 +17,7 @@ A self-contained shell script (`run-compose.sh`) that simplifies running `podman
 ## Files Changed / Created
 
 | File | Action |
-|------|--------|
+| --- | --- |
 | `compose/run-compose.sh` | Created — launcher script |
 | `compose/podman-compose.env` | Created — optional config template (no passwords) |
 | `compose/compose-orcl.yaml` | Updated — volume paths use `${PODMAN_BASE}` |
@@ -26,7 +27,7 @@ A self-contained shell script (`run-compose.sh`) that simplifies running `podman
 
 Each compose YAML is updated to reference a single variable `${PODMAN_BASE}` as the root for all bind-mount volumes. The subdirectory structure is normalised across both files:
 
-```
+```text
 ${PODMAN_BASE}/oradata        — Oracle datafiles
 ${PODMAN_BASE}/ords/config    — ORDS configuration
 ${PODMAN_BASE}/ords/secrets   — ORDS credential files
@@ -36,7 +37,7 @@ ${PODMAN_BASE}/apex           — APEX installation
 **Built-in defaults per compose file:**
 
 | Compose file | Default PODMAN_BASE |
-|---|---|
+| --- | --- |
 | `compose-orcl.yaml` | `${HOME}/opt/oracle` |
 | `compose-orcl-apex26.yaml` | `${HOME}/opt/oracle/apex26` |
 | Future files (no mapping) | `${HOME}/opt/oracle/<yaml-stem>` |
@@ -55,7 +56,7 @@ Sourced by the script at startup if present. Ships as a commented-out template. 
 
 ## Script Flow
 
-```
+```text
 run-compose.sh
 │
 ├─ 1. Source ./podman-compose.env if present
@@ -74,14 +75,14 @@ run-compose.sh
 ├─ 5. Check ORDS_PUBLIC_USER_PWD
 │     └─ Not set → prompt securely (hidden input); type 'q' to exit
 │
-├─ 6. Pre-launch summary
-│     └─ Print: selected compose file, PODMAN_BASE — one last look before action
-│
-├─ 7. Optional cleanup
+├─ 6. Optional cleanup
 │     ├─ "Remove existing containers? [y/N]"
 │     │     yes → podman compose -f <file> stop (silent); podman compose -f <file> rm -f (silent)
 │     └─ "Also remove the network? [y/N]"   (only asked if containers removed)
 │           yes → podman compose -f <file> down (handles network dependency ordering)
+│
+├─ 7. Pre-launch summary
+│     └─ Print: compose file, PODMAN_BASE, cleanup performed — confirm state before action
 │
 └─ 8. Create required directories (mkdir -p) then launch
       podman compose -f <file> up -d
@@ -90,7 +91,7 @@ run-compose.sh
 ## Error Handling
 
 | Condition | Behaviour |
-|---|---|
+| --- | --- |
 | Compose file argument not found | Exit immediately with message, before any prompts |
 | `podman` not on PATH | Exit immediately with install hint |
 | User types `q` at password prompt | Clean exit, no partial state |
