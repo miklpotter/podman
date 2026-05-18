@@ -167,6 +167,48 @@ echo "  PODMAN_BASE  : ${PODMAN_BASE}"
 echo "────────────────────────────────────────"
 echo ""
 
+# ── APEX download ─────────────────────────────────────────────────────────────
+
+APEX_URL="https://download.oracle.com/otn_software/apex/apex-latest.zip"
+APEX_DIR="${PODMAN_BASE}/apex"
+APEX_ZIP="${PODMAN_BASE}/apex-latest.zip"
+
+apex_has_content() {
+  [[ -d "${APEX_DIR}" ]] && [[ -n "$(ls -A "${APEX_DIR}" 2>/dev/null)" ]]
+}
+
+download_apex() {
+  mkdir -p "${PODMAN_BASE}"
+  echo "  Downloading apex-latest.zip (this may take several minutes)..."
+  curl -L -o "${APEX_ZIP}" "${APEX_URL}"
+  echo "  Extracting..."
+  unzip -o "${APEX_ZIP}" -d "${PODMAN_BASE}"
+  rm -f "${APEX_ZIP}"
+  echo "  APEX ready in: ${APEX_DIR}"
+}
+
+echo ""
+if apex_has_content; then
+  echo "APEX directory already exists: ${APEX_DIR}"
+  read -r -p "Replace with a fresh apex-latest.zip download? [y/N]: " replace_apex
+  if [[ "${replace_apex}" =~ ^[Yy]$ ]]; then
+    echo "  Removing existing APEX directory..."
+    rm -rf "${APEX_DIR}"
+    download_apex
+  else
+    echo "  Keeping existing APEX directory."
+  fi
+else
+  echo "APEX directory not found or empty: ${APEX_DIR}"
+  echo "ORDS requires the apex directory to install APEX automatically during build."
+  read -r -p "Download apex-latest.zip now? [Y/n]: " download_apex_yn
+  if [[ ! "${download_apex_yn}" =~ ^[Nn]$ ]]; then
+    download_apex
+  else
+    echo "  Warning: ORDS will not install APEX without the apex directory."
+  fi
+fi
+
 # ── Create required directories ───────────────────────────────────────────────
 
 mkdir -p \
