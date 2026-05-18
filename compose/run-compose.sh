@@ -139,3 +139,21 @@ if [[ -z "${ORDS_PUBLIC_USER_PWD:-}" ]]; then
 fi
 
 echo "Passwords    : set"
+
+# ── Optional cleanup ──────────────────────────────────────────────────────────
+
+echo ""
+read -r -p "Remove existing containers for this stack? [y/N]: " remove_containers
+if [[ "${remove_containers}" =~ ^[Yy]$ ]]; then
+  echo "  Stopping and removing containers..."
+  podman compose -f "${COMPOSE_FILE}" stop  2>/dev/null || true
+  podman compose -f "${COMPOSE_FILE}" rm -f 2>/dev/null || true
+  echo "  Containers removed."
+
+  read -r -p "Also remove the network? [y/N]: " remove_network
+  if [[ "${remove_network}" =~ ^[Yy]$ ]]; then
+    echo "  Bringing down network..."
+    podman compose -f "${COMPOSE_FILE}" down 2>/dev/null || true
+    echo "  Network removed."
+  fi
+fi
