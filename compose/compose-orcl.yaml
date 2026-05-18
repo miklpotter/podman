@@ -6,9 +6,10 @@
 # version: "3.9"
 # export ORACLE_PWD=password1
 # export ORDS_PUBLIC_USER_PWD=password2
-# mkdir -p ~/opt/oracle/oradata
-# mkdir -p ~/opt/oracle/ords_config
-# mkdir -p ~/opt/oracle/ords_secrets
+# mkdir -p ${PODMAN_BASE}/oradata
+# mkdir -p ${PODMAN_BASE}/ords/config
+# mkdir -p ${PODMAN_BASE}/ords/secrets
+# mkdir -p ${PODMAN_BASE}/apex
 # cd ~/opt/oracle
 # curl -L -O https://download.oracle.com/otn_software/apex/apex-latest.zip
 # unzip apex-latest.zip
