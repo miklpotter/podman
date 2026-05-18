@@ -33,6 +33,26 @@ podman pull container-registry.oracle.com/database/ords:latest
 ```
 
 ## Use podman compose
+
+### TL;DR
+There is a script you can run, that will compose your group and container, and ensure all the required variables are provided
+#### Run interactively
+
+`./compose/run-compose.sh`
+running interactively will ask you for the baseline directory (eg $HOME/opt/oracle/apex26), prompt of passwords and even verify which yaml you want to use.
+It will verify if you wish to remove existing containers and networks, making it simple to rebuild.
+
+#### Or pass the compose file directly
+
+`./compose/run-compose.sh compose-orcl-apex26.yaml`
+second verse, same as the first, but you tell it which yaml
+
+#### To pre-set a custom base directory, 
+
+`export PODMAN_BASE=/my/path`
+or edit `compose/podman-compose.env` to define PODMAN_BASE
+
+### DIY Method if you like being in more direct control
 This example uses persistent volumes to allow your container to be rebuilt at-will. this lets you reconfigure the container as needed, WITHOUT losing the database or ORDS config.
 I have used ~/opt/oracle as my base directory for all examples, if your chosen location differs ( eg in windows the path could look different), just edit the relevant lines to accomodate
 
